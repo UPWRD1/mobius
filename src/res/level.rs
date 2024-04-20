@@ -14,7 +14,7 @@ pub struct Wall {
     pub zend: f32,
     pub portalid: i32,
 }
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct WallModel {
     pub model: WeakModel,
     pub position: Vector3,
@@ -49,7 +49,7 @@ pub enum ReaderMode {
 }
 
 impl Map {
-    pub fn new(fname: &str, rl: &mut RaylibHandle, thread: &RaylibThread) -> Self {
+    pub fn new(fname: &str) -> Self {
         let mut rm: ReaderMode = ReaderMode::SEARCHING;
         let mut map: Map = Map {
             name: fname.to_string(),
@@ -57,7 +57,7 @@ impl Map {
             walls: vec![],
             wallmodels: vec![],
         };
-        let f = fs::read_to_string(fname.to_string()).unwrap();
+        let f = fs::read_to_string(fname).unwrap();
 
         for (count, line) in f.lines().enumerate() {
             if !line.is_empty() {
@@ -110,9 +110,15 @@ impl Map {
             }
         }
 
-        for s in &map.sectors {
+        return map;
+    }
+
+    pub fn gen_wallmods(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+        self.wallmodels = vec![];
+
+        for s in &self.sectors {
             for i in s.firstwall..s.nwalls + 1 {
-                let w = map.walls.get(i).unwrap();
+                let w = self.walls.get(i).unwrap();
                 //draw_wall_lines(d2, w, s);
                 let cube_pos = Vector3 {
                     // Midpoint formula to find center of line.
@@ -128,12 +134,11 @@ impl Map {
                     f32::sqrt((w.xend - w.xstart).powf(2.0) + (w.zend - w.zstart).powf(2.0));
 
                 //println!("{}", cube_angle);
-                map.wallmodels = vec![];
 
                 let model = unsafe {
                     rl.load_model_from_mesh(
-                        &thread,
-                        prelude::Mesh::gen_mesh_cube(&thread, line_len, cube_height, 0.1)
+                        thread,
+                        prelude::Mesh::gen_mesh_cube(thread, line_len, cube_height, 0.1)
                             .make_weak(),
                     )
                     .unwrap()
@@ -147,9 +152,9 @@ impl Map {
                     length: line_len,
                 };
 
-                map.wallmodels.push(wallmod);
+                self.wallmodels.push(wallmod.to_owned());
             }
         }
-        return map;
+        println!("{:?}", self.wallmodels);
     }
 }

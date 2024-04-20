@@ -32,7 +32,9 @@ fn main() {
         60.0,
     );
 
-    let m = res::level::Map::new("demo.map", &mut rl, &thread);
+    let mut m = res::level::Map::new("demo.map");
+
+    m.gen_wallmods(&mut rl, &thread);
 
     let look_angles: Vector2 = Vector2::zero();
 
@@ -61,7 +63,8 @@ fn main() {
         );
 
         for (i, model) in m.wallmodels.clone().into_iter().enumerate() {
-            d2.draw_model(model.model.to_owned(), model.position, 1.0, Color::BLUE);
+            d2.draw_model(model.model.clone(), model.position, 1.0, Color::BLUE);
+            //println!("Drawing model #{}, {:?}", i, model);
         }
     }
 }
@@ -203,6 +206,6 @@ pub fn make_bounding_box(position: Vector3, size: Vector3) -> BoundingBox {
     bb
 }
 
-pub fn check_collision(entity_pos: Vector3, entity_size: Vector3, entityId: i32) {
+pub fn check_collision(entity_pos: Vector3, entity_size: Vector3, entity_id: i32) {
     let entity_box = make_bounding_box(entity_pos, entity_size);
 }

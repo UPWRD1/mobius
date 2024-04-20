@@ -2,14 +2,11 @@ use std::{f32::consts::PI, ops::Mul};
 
 use arr_macro::arr;
 use rand::prelude::*;
-use raylib::{
-    ffi::{exit, sqrtf, GetFrameTime},
-    prelude::*,
-};
+use raylib::{ffi::exit, prelude::*};
 pub mod res;
 
-const WINDOW_WIDTH: i32 = 1280;
-const WINDOW_HEIGHT: i32 = 720;
+const WINDOW_WIDTH: i32 = 640;
+const WINDOW_HEIGHT: i32 = 720 / 2;
 
 const PLAYER_CAMERA_MIN_CLAMP: f32 = 89.0;
 const PLAYER_CAMERA_MAX_CLAMP: f32 = -89.0;
@@ -46,22 +43,20 @@ impl Column {
 }
 
 fn main() {
-    let x = res::level::Map::new("demo.map");
-
-    unsafe {
-        exit(0);
-    }
-
+    let m = res::level::Map::new("demo.map");
+    //unsafe {
+    // exit(0);
+    ///}
     let (mut rl, thread) = raylib::init()
         .size(WINDOW_WIDTH, WINDOW_HEIGHT)
         .title("Hello, world!")
         .build();
 
-    let mut camera = Camera3D::perspective(
-        Vector3::new(5.0, 1.0, 5.0),
-        Vector3::new(0.0, 0.0, 3.0),
+    let mut camera: Camera3D = Camera3D::perspective(
+        Vector3::new(2.5, 1.0, 2.5),
+        Vector3::new(2.5, 1.0, 2.5),
         Vector3::new(0.0, 1.0, 0.0),
-        90.0,
+        60.0,
     );
 
     let look_angles: Vector2 = Vector2::zero();
@@ -74,16 +69,16 @@ fn main() {
         z: 0.0,
     };
 
-    rl.set_camera_mode(&camera, CameraMode::CAMERA_FIRST_PERSON);
+    rl.set_camera_mode(&camera, CameraMode::CAMERA_FREE);
     rl.set_target_fps(60);
-    rl.disable_cursor();
+    //rl.disable_cursor();
 
     while !rl.window_should_close() {
         rl.update_camera(&mut camera);
 
         let mut d = rl.begin_drawing(&thread);
 
-        d.clear_background(Color::DARKGREEN);
+        d.clear_background(Color::BLACK);
         {
             let mut d2 = d.begin_mode3D(camera);
 
@@ -92,15 +87,39 @@ fn main() {
                 Vector2::new(32.0, 32.0),
                 Color::LIGHTGRAY,
             );
-            d2.draw_cube(Vector3::new(-16.0, 2.5, 0.0), 1.0, 5.0, 32.0, Color::BLUE);
-            d2.draw_cube(Vector3::new(16.0, 2.5, 0.0), 1.0, 5.0, 32.0, Color::LIME);
-            d2.draw_cube(Vector3::new(0.0, 2.5, 16.0), 32.0, 5.0, 1.0, Color::GOLD);
 
-            for column in columns.iter() {
-                d2.draw_cube(column.position, 2.0, column.height, 2.0, column.color);
-                d2.draw_cube_wires(column.position, 2.0, column.height, 2.0, Color::MAROON);
+            for s in &m.sectors {
+                for i in s.firstwall..s.nwalls + 1 {
+                    let w = m.walls.get(i).unwrap();
+                    d2.draw_line_3D(
+                        Vector3 {
+                            x: w.xstart,
+                            y: s.floor_height,
+                            z: w.zstart,
+                        },
+                        Vector3 {
+                            x: w.xend,
+                            y: s.ceil_height,
+                            z: w.zend,
+                        },
+                        Color::RED,
+                    );
+                }
             }
+
+            //fun_name(d2, &columns);
         }
+    }
+}
+
+fn fun_name(mut d2: RaylibMode3D<'_, RaylibDrawHandle<'_>>, columns: &[Column; 20]) {
+    d2.draw_cube(Vector3::new(-16.0, 2.5, 0.0), 1.0, 5.0, 32.0, Color::BLUE);
+    d2.draw_cube(Vector3::new(16.0, 2.5, 0.0), 1.0, 5.0, 32.0, Color::LIME);
+    d2.draw_cube(Vector3::new(0.0, 2.5, 16.0), 32.0, 5.0, 1.0, Color::GOLD);
+
+    for column in columns.iter() {
+        d2.draw_cube(column.position, 2.0, column.height, 2.0, column.color);
+        d2.draw_cube_wires(column.position, 2.0, column.height, 2.0, Color::MAROON);
     }
 }
 

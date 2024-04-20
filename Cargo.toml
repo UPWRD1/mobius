@@ -10,3 +10,10 @@ arr_macro = "0.2.1"
 rand = "0.8.5"
 raylib = "3.7.0"
 structopt = "0.3.26"
+
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+opt-level = 3  # Optimize for size.
+lto = true
+codegen-units = 1
+panic = "abort"

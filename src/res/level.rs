@@ -1,5 +1,7 @@
 use std::{fs, vec};
 
+use rand::Rng;
+use raylib::color::Color;
 use raylib::models::WeakModel;
 use raylib::prelude;
 use raylib::prelude::RaylibMesh;
@@ -21,6 +23,7 @@ pub struct WallModel {
     pub height: f32,
     pub angle: f32,
     pub length: f32,
+    pub color: Color,
 }
 
 #[derive(Debug)]
@@ -143,6 +146,7 @@ impl Map {
                     )
                     .unwrap()
                 };
+                let mut rng = rand::thread_rng();
 
                 let wallmod: WallModel = WallModel {
                     model: unsafe { model.make_weak() },
@@ -150,11 +154,12 @@ impl Map {
                     height: cube_height,
                     angle: cube_angle,
                     length: line_len,
+                    color: Color::new(rng.gen_range(20..255), rng.gen_range(10..55), 30, 255),
                 };
 
                 self.wallmodels.push(wallmod.to_owned());
             }
         }
-        println!("{:?}", self.wallmodels);
+        //dbg!(self.wallmodels.clone());
     }
 }

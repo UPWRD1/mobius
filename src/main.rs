@@ -1,5 +1,6 @@
 use std::{f32::consts::PI, ops::Mul};
 
+use rand::Rng;
 use raylib::prelude::*;
 
 pub mod res;
@@ -63,8 +64,16 @@ fn main() {
         );
 
         for (i, model) in m.wallmodels.clone().into_iter().enumerate() {
-            d2.draw_model(model.model.clone(), model.position, 1.0, Color::BLUE);
-            //println!("Drawing model #{}, {:?}", i, model);
+            d2.draw_model_ex(
+                model.model.clone(),
+                model.position,
+                Vector3::up(),
+                model.angle,
+                Vector3::one(),
+                model.color,
+            );
+            //d2.draw_model(model.model.clone(), model.position, 1.0, Color::BLUE);
+            //dbg!(model);
         }
     }
 }

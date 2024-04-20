@@ -3,8 +3,8 @@
   0      0      3      0.0    3.0    -1      0.0
 
 [WALLS]
-//id     xstart zstart xend   zend   portalid
-  0      0      0      0      5      -1     
-  1      0      5      5      5      -1
-  2      5      5      5      0      -1
-  3      5      0      0      0      -1
+//id     xstart zstart xend   zend   portid
+  0      0      0      0      5      -1      textures/cracked_concrete.jpg
+  1      0      5      5      5      -1      textures/cracked_concrete.jpg
+  2      5      5      5      0      -1      textures/cracked_concrete.jpg
+  3      5      0      0      0      -1      textures/cracked_concrete.jpg

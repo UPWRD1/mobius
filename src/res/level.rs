@@ -2,7 +2,7 @@ use std::{fs, vec};
 
 use rand::Rng;
 use raylib::color::Color;
-use raylib::models::WeakModel;
+use raylib::models::{RaylibMaterial, RaylibModel, WeakModel};
 use raylib::prelude;
 use raylib::prelude::RaylibMesh;
 use raylib::{math::Vector3, RaylibHandle, RaylibThread};
@@ -15,6 +15,7 @@ pub struct Wall {
     pub xend: f32,
     pub zend: f32,
     pub portalid: i32,
+    pub tex: String,
 }
 #[derive(Clone, Debug)]
 pub struct WallModel {
@@ -62,7 +63,7 @@ impl Map {
         };
         let f = fs::read_to_string(fname).unwrap();
 
-        for (count, line) in f.lines().enumerate() {
+        for line in f.lines() {
             if !line.is_empty() {
                 // comment skipping
                 if line.chars().nth(0) == Some('/') && line.chars().nth(1) == Some('/') {
@@ -104,6 +105,7 @@ impl Map {
                                 xend: chopped.get_unchecked(3).to_string().parse().unwrap(),
                                 zend: chopped.get_unchecked(4).to_string().parse().unwrap(),
                                 portalid: chopped.get_unchecked(5).to_string().parse().unwrap(),
+                                tex: chopped.get_unchecked(6).to_string(),
                             };
                             println!("{:?}", w);
                             map.walls.push(w);
@@ -138,7 +140,7 @@ impl Map {
 
                 //println!("{}", cube_angle);
 
-                let model = unsafe {
+                let mut model: prelude::Model = unsafe {
                     rl.load_model_from_mesh(
                         thread,
                         prelude::Mesh::gen_mesh_cube(thread, line_len, cube_height, 0.1)
@@ -146,7 +148,24 @@ impl Map {
                     )
                     .unwrap()
                 };
-                let mut rng = rand::thread_rng();
+                let mut rng: rand::prelude::ThreadRng = rand::thread_rng();
+
+                let walltex: prelude::WeakTexture2D = unsafe {
+                    rl.load_texture(thread, &w.tex.to_owned())
+                        .unwrap()
+                        .make_weak()
+                };
+                unsafe {
+                    model
+                        .make_weak()
+                        .materials_mut()
+                        .first()
+                        .unwrap()
+                        .maps()
+                        .first()
+                        .unwrap()
+                        .texture = walltex.to_raw()
+                }
 
                 let wallmod: WallModel = WallModel {
                     model: unsafe { model.make_weak() },
@@ -154,7 +173,12 @@ impl Map {
                     height: cube_height,
                     angle: cube_angle,
                     length: line_len,
-                    color: Color::new(rng.gen_range(20..255), rng.gen_range(10..55), 30, 255),
+                    color: Color::new(
+                        rng.gen_range(0..255),
+                        rng.gen_range(0..255),
+                        rng.gen_range(0..255),
+                        255,
+                    ),
                 };
 
                 self.wallmodels.push(wallmod.to_owned());

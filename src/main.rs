@@ -32,7 +32,7 @@ fn main() {
         60.0,
     );
 
-    let m = res::level::Map::new("demo.map", &rl, &thread);
+    let m = res::level::Map::new("demo.map", &mut rl, &thread);
 
     let look_angles: Vector2 = Vector2::zero();
 
@@ -44,7 +44,7 @@ fn main() {
 
     rl.set_camera_mode(&camera, CameraMode::CAMERA_ORBITAL);
     rl.set_target_fps(60);
-    //rl.disable_cursor();
+    rl.disable_cursor();
 
     while !rl.window_should_close() {
         rl.update_camera(&mut camera);
@@ -60,49 +60,8 @@ fn main() {
             Color::LIGHTGRAY,
         );
 
-        for s in &m.sectors {
-            for i in s.firstwall..s.nwalls + 1 {
-                let w = m.walls.get(i).unwrap();
-                //draw_wall_lines(d2, w, s);
-                let cube_pos = Vector3 {
-                    // Midpoint formula to find center of line.
-                    x: (w.xstart + w.xend) / 2.0,
-                    y: (s.floor_height + s.ceil_height) / 2.0,
-                    z: (w.zstart + w.zend) / 2.0,
-                };
-
-                let cube_height = s.ceil_height - s.floor_height; // How tall the wall?
-                let line_xz_slope = (w.zend - w.zstart) / (w.xend - w.xstart); //Slope formula
-                let cube_angle = f32::atan(line_xz_slope).to_degrees(); //Converts to rads, then deg
-                let line_len =
-                    f32::sqrt((w.xend - w.xstart).powf(2.0) + (w.zend - w.zstart).powf(2.0));
-
-                //println!("{}", cube_angle);
-
-                let model = unsafe {
-                    rl.load_model_from_mesh(
-                        &thread,
-                        prelude::Mesh::gen_mesh_cube(&thread, line_len, cube_height, 0.0)
-                            .make_weak(),
-                    )
-                    .unwrap()
-                };
-
-                /*
-                                            let cube_mesh: ffi::Mesh = GenMeshCube(line_len, cube_height, 0.0);
-                //unsafe { raylib::ffi::GenMeshCube(line_len, cube_height, 0.0) };
-                let mut cube_model = LoadModelFromMesh(cube_mesh);
-                cube_model.transform = Matrix::mul(
-                    Matrix::rotate_y(cube_angle),
-                    cube_model.transform.into(),
-                )
-                .into();
-                 */
-
-                d2.begin_mode3D(camera);
-
-                d2.draw_model(model, cube_pos, 1.0, Color::BLUE)
-            }
+        for (i, model) in m.wallmodels.clone().into_iter().enumerate() {
+            d2.draw_model(model.model.to_owned(), model.position, 1.0, Color::BLUE);
         }
     }
 }

@@ -1,8 +1,9 @@
 use std::{fs, vec};
 
+use raylib::models::WeakModel;
 use raylib::prelude;
 use raylib::prelude::RaylibMesh;
-use raylib::{math::Vector3, models::Model, RaylibHandle, RaylibThread};
+use raylib::{math::Vector3, RaylibHandle, RaylibThread};
 
 #[derive(Debug)]
 pub struct Wall {
@@ -12,6 +13,14 @@ pub struct Wall {
     pub xend: f32,
     pub zend: f32,
     pub portalid: i32,
+}
+#[derive(Clone)]
+pub struct WallModel {
+    pub model: WeakModel,
+    pub position: Vector3,
+    pub height: f32,
+    pub angle: f32,
+    pub length: f32,
 }
 
 #[derive(Debug)]
@@ -29,7 +38,7 @@ pub struct Map {
     pub name: String,
     pub sectors: Vec<Sector>,
     pub walls: Vec<Wall>,
-    pub wallmodels: Option<Vec<Model>>,
+    pub wallmodels: Vec<WallModel>,
 }
 
 #[derive(PartialEq, PartialOrd)]
@@ -40,13 +49,13 @@ pub enum ReaderMode {
 }
 
 impl Map {
-    pub fn new(fname: &str, rl: &RaylibHandle, thread: &RaylibThread) -> Self {
+    pub fn new(fname: &str, rl: &mut RaylibHandle, thread: &RaylibThread) -> Self {
         let mut rm: ReaderMode = ReaderMode::SEARCHING;
         let mut map: Map = Map {
             name: fname.to_string(),
             sectors: vec![],
             walls: vec![],
-            wallmodels: None,
+            wallmodels: vec![],
         };
         let f = fs::read_to_string(fname.to_string()).unwrap();
 
@@ -119,15 +128,26 @@ impl Map {
                     f32::sqrt((w.xend - w.xstart).powf(2.0) + (w.zend - w.zstart).powf(2.0));
 
                 //println!("{}", cube_angle);
+                map.wallmodels = vec![];
 
                 let model = unsafe {
                     rl.load_model_from_mesh(
                         &thread,
-                        prelude::Mesh::gen_mesh_cube(&thread, line_len, cube_height, 0.0)
+                        prelude::Mesh::gen_mesh_cube(&thread, line_len, cube_height, 0.1)
                             .make_weak(),
                     )
                     .unwrap()
                 };
+
+                let wallmod: WallModel = WallModel {
+                    model: unsafe { model.make_weak() },
+                    position: cube_pos,
+                    height: cube_height,
+                    angle: cube_angle,
+                    length: line_len,
+                };
+
+                map.wallmodels.push(wallmod);
             }
         }
         return map;

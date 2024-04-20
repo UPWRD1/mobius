@@ -1,8 +1,7 @@
 use std::{f32::consts::PI, ops::Mul};
 
-use arr_macro::arr;
-use rand::prelude::*;
-use raylib::{ffi::exit, prelude::*};
+use raylib::prelude::*;
+
 pub mod res;
 
 const WINDOW_WIDTH: i32 = 640;
@@ -17,36 +16,10 @@ const MOVE_BACKWARD: KeyboardKey = KeyboardKey::KEY_S;
 const MOVE_LEFT: KeyboardKey = KeyboardKey::KEY_A;
 const MOVE_RIGHT: KeyboardKey = KeyboardKey::KEY_D;
 
-struct Column {
-    height: f32,
-    position: Vector3,
-    color: Color,
-}
-
-impl Column {
-    fn create_random() -> Column {
-        let mut rng = rand::thread_rng();
-        let height: f32 = rng.gen_range(1.0..12.0);
-        let position = Vector3::new(
-            rng.gen_range(-15.0..15.0),
-            height / 2.0,
-            rng.gen_range(-15.0..15.0),
-        );
-        let color = Color::new(rng.gen_range(20..255), rng.gen_range(10..55), 30, 255);
-
-        Column {
-            height,
-            position,
-            color,
-        }
-    }
-}
-
 fn main() {
-    let m = res::level::Map::new("demo.map");
     //unsafe {
     // exit(0);
-    ///}
+    //}
     let (mut rl, thread) = raylib::init()
         .size(WINDOW_WIDTH, WINDOW_HEIGHT)
         .title("Hello, world!")
@@ -59,9 +32,9 @@ fn main() {
         60.0,
     );
 
-    let look_angles: Vector2 = Vector2::zero();
+    let m = res::level::Map::new("demo.map", &rl, &thread);
 
-    let columns: [Column; 20] = arr![Column::create_random(); 20];
+    let look_angles: Vector2 = Vector2::zero();
 
     let mut vel: Vector3 = Vector3 {
         x: 0.0,
@@ -69,7 +42,7 @@ fn main() {
         z: 0.0,
     };
 
-    rl.set_camera_mode(&camera, CameraMode::CAMERA_FREE);
+    rl.set_camera_mode(&camera, CameraMode::CAMERA_ORBITAL);
     rl.set_target_fps(60);
     //rl.disable_cursor();
 
@@ -79,48 +52,79 @@ fn main() {
         let mut d = rl.begin_drawing(&thread);
 
         d.clear_background(Color::BLACK);
-        {
-            let mut d2 = d.begin_mode3D(camera);
+        let mut d2 = d.begin_mode3D(camera);
 
-            d2.draw_plane(
-                Vector3::new(0.0, 0.0, 0.0),
-                Vector2::new(32.0, 32.0),
-                Color::LIGHTGRAY,
-            );
+        d2.draw_plane(
+            Vector3::new(0.0, 0.0, 0.0),
+            Vector2::new(32.0, 32.0),
+            Color::LIGHTGRAY,
+        );
 
-            for s in &m.sectors {
-                for i in s.firstwall..s.nwalls + 1 {
-                    let w = m.walls.get(i).unwrap();
-                    d2.draw_line_3D(
-                        Vector3 {
-                            x: w.xstart,
-                            y: s.floor_height,
-                            z: w.zstart,
-                        },
-                        Vector3 {
-                            x: w.xend,
-                            y: s.ceil_height,
-                            z: w.zend,
-                        },
-                        Color::RED,
-                    );
-                }
+        for s in &m.sectors {
+            for i in s.firstwall..s.nwalls + 1 {
+                let w = m.walls.get(i).unwrap();
+                //draw_wall_lines(d2, w, s);
+                let cube_pos = Vector3 {
+                    // Midpoint formula to find center of line.
+                    x: (w.xstart + w.xend) / 2.0,
+                    y: (s.floor_height + s.ceil_height) / 2.0,
+                    z: (w.zstart + w.zend) / 2.0,
+                };
+
+                let cube_height = s.ceil_height - s.floor_height; // How tall the wall?
+                let line_xz_slope = (w.zend - w.zstart) / (w.xend - w.xstart); //Slope formula
+                let cube_angle = f32::atan(line_xz_slope).to_degrees(); //Converts to rads, then deg
+                let line_len =
+                    f32::sqrt((w.xend - w.xstart).powf(2.0) + (w.zend - w.zstart).powf(2.0));
+
+                //println!("{}", cube_angle);
+
+                let model = unsafe {
+                    rl.load_model_from_mesh(
+                        &thread,
+                        prelude::Mesh::gen_mesh_cube(&thread, line_len, cube_height, 0.0)
+                            .make_weak(),
+                    )
+                    .unwrap()
+                };
+
+                /*
+                                            let cube_mesh: ffi::Mesh = GenMeshCube(line_len, cube_height, 0.0);
+                //unsafe { raylib::ffi::GenMeshCube(line_len, cube_height, 0.0) };
+                let mut cube_model = LoadModelFromMesh(cube_mesh);
+                cube_model.transform = Matrix::mul(
+                    Matrix::rotate_y(cube_angle),
+                    cube_model.transform.into(),
+                )
+                .into();
+                 */
+
+                d2.begin_mode3D(camera);
+
+                d2.draw_model(model, cube_pos, 1.0, Color::BLUE)
             }
-
-            //fun_name(d2, &columns);
         }
     }
 }
 
-fn fun_name(mut d2: RaylibMode3D<'_, RaylibDrawHandle<'_>>, columns: &[Column; 20]) {
-    d2.draw_cube(Vector3::new(-16.0, 2.5, 0.0), 1.0, 5.0, 32.0, Color::BLUE);
-    d2.draw_cube(Vector3::new(16.0, 2.5, 0.0), 1.0, 5.0, 32.0, Color::LIME);
-    d2.draw_cube(Vector3::new(0.0, 2.5, 16.0), 32.0, 5.0, 1.0, Color::GOLD);
-
-    for column in columns.iter() {
-        d2.draw_cube(column.position, 2.0, column.height, 2.0, column.color);
-        d2.draw_cube_wires(column.position, 2.0, column.height, 2.0, Color::MAROON);
-    }
+fn draw_wall_lines(
+    d2: &mut RaylibMode3D<'_, RaylibDrawHandle<'_>>,
+    w: &res::level::Wall,
+    s: &res::level::Sector,
+) {
+    d2.draw_line_3D(
+        Vector3 {
+            x: w.xstart,
+            y: s.floor_height,
+            z: w.zstart,
+        },
+        Vector3 {
+            x: w.xend,
+            y: s.ceil_height,
+            z: w.zend,
+        },
+        raylib::prelude::Color::RED,
+    );
 }
 
 pub enum MovementState {

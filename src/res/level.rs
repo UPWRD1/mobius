@@ -1,5 +1,9 @@
 use std::{fs, vec};
 
+use raylib::prelude;
+use raylib::prelude::RaylibMesh;
+use raylib::{math::Vector3, models::Model, RaylibHandle, RaylibThread};
+
 #[derive(Debug)]
 pub struct Wall {
     pub id: usize,
@@ -25,6 +29,7 @@ pub struct Map {
     pub name: String,
     pub sectors: Vec<Sector>,
     pub walls: Vec<Wall>,
+    pub wallmodels: Option<Vec<Model>>,
 }
 
 #[derive(PartialEq, PartialOrd)]
@@ -35,12 +40,13 @@ pub enum ReaderMode {
 }
 
 impl Map {
-    pub fn new(fname: &str) -> Self {
+    pub fn new(fname: &str, rl: &RaylibHandle, thread: &RaylibThread) -> Self {
         let mut rm: ReaderMode = ReaderMode::SEARCHING;
         let mut map: Map = Map {
             name: fname.to_string(),
             sectors: vec![],
             walls: vec![],
+            wallmodels: None,
         };
         let f = fs::read_to_string(fname.to_string()).unwrap();
 
@@ -92,6 +98,36 @@ impl Map {
                         }
                     }
                 }
+            }
+        }
+
+        for s in &map.sectors {
+            for i in s.firstwall..s.nwalls + 1 {
+                let w = map.walls.get(i).unwrap();
+                //draw_wall_lines(d2, w, s);
+                let cube_pos = Vector3 {
+                    // Midpoint formula to find center of line.
+                    x: (w.xstart + w.xend) / 2.0,
+                    y: (s.floor_height + s.ceil_height) / 2.0,
+                    z: (w.zstart + w.zend) / 2.0,
+                };
+
+                let cube_height = s.ceil_height - s.floor_height; // How tall the wall?
+                let line_xz_slope = (w.zend - w.zstart) / (w.xend - w.xstart); //Slope formula
+                let cube_angle = f32::atan(line_xz_slope).to_degrees(); //Converts to rads, then deg
+                let line_len =
+                    f32::sqrt((w.xend - w.xstart).powf(2.0) + (w.zend - w.zstart).powf(2.0));
+
+                //println!("{}", cube_angle);
+
+                let model = unsafe {
+                    rl.load_model_from_mesh(
+                        &thread,
+                        prelude::Mesh::gen_mesh_cube(&thread, line_len, cube_height, 0.0)
+                            .make_weak(),
+                    )
+                    .unwrap()
+                };
             }
         }
         return map;

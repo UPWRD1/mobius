@@ -1,12 +1,10 @@
 use std::{fs, vec};
 
-use rand::Rng;
 use raylib::color::Color;
-use raylib::ffi::GetRandomValue;
 use raylib::models::{RaylibMaterial, RaylibModel, WeakModel};
 use raylib::prelude;
 use raylib::prelude::RaylibMesh;
-use raylib::texture::{Texture2D, WeakTexture2D};
+use raylib::texture::WeakTexture2D;
 use raylib::{math::Vector3, RaylibHandle, RaylibThread};
 
 #[derive(Debug)]
@@ -143,7 +141,7 @@ impl Map {
 
                 //println!("{}", cube_angle);
 
-                let mut model: prelude::Model = unsafe {
+                let model: prelude::Model = unsafe {
                     rl.load_model_from_mesh(
                         thread,
                         prelude::Mesh::gen_mesh_cube(thread, line_len, cube_height, 0.1)
@@ -157,17 +155,26 @@ impl Map {
                 let walltex: prelude::WeakTexture2D =
                     unsafe { rl.load_texture_from_image(thread, &im).unwrap().make_weak() };
 
-                let rand_light = unsafe { GetRandomValue(0, 255) as u8 };
+                //let rand_light = unsafe { GetRandomValue(0, 255) as u8 };
+
+                model
+                    .materials()
+                    .first()
+                    .unwrap()
+                    .to_owned()
+                    .set_material_texture(
+                        raylib::consts::MaterialMapIndex::MATERIAL_MAP_ALBEDO,
+                        walltex.clone(),
+                    );
                 let wallmod: WallModel = WallModel {
                     model: unsafe { model.make_weak() },
                     position: cube_pos,
                     height: cube_height,
                     angle: cube_angle,
                     length: line_len,
-                    color: Color::new(rand_light, rand_light, rand_light, 255),
-                    tex: walltex,
+                    color: Color::WHITE, //Color::new(rand_light, rand_light, rand_light, 255),
+                    tex: walltex.clone(),
                 };
-
                 self.wallmodels.push(wallmod.to_owned());
             }
         }

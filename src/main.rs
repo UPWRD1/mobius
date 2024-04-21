@@ -4,8 +4,8 @@ use raylib::prelude::*;
 
 pub mod res;
 
-const WINDOW_WIDTH: i32 = 640;
-const WINDOW_HEIGHT: i32 = 720 / 2;
+const WINDOW_WIDTH: i32 = 1280;
+const WINDOW_HEIGHT: i32 = 720; // / 2;
 
 const PLAYER_CAMERA_MIN_CLAMP: f32 = 89.0;
 const PLAYER_CAMERA_MAX_CLAMP: f32 = -89.0;
@@ -27,7 +27,7 @@ fn main() {
 
     let mut camera: Camera3D = Camera3D::perspective(
         Vector3::new(2.5, 1.0, 2.5),
-        Vector3::new(2.5, 1.0, 2.5),
+        Vector3::new(5.0, 1.0, 0.0),
         Vector3::new(0.0, 1.0, 0.0),
         60.0,
     );
@@ -36,9 +36,10 @@ fn main() {
 
     m.gen_wallmods(&mut rl, &thread);
 
-    rl.set_camera_mode(&camera, CameraMode::CAMERA_ORBITAL);
-    rl.set_target_fps(60);
+    rl.set_camera_mode(&camera, CameraMode::CAMERA_FIRST_PERSON);
+    rl.set_target_fps(30);
     rl.disable_cursor();
+    rl.hide_cursor();
 
     while !rl.window_should_close() {
         rl.update_camera(&mut camera);

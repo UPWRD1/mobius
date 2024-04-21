@@ -1,6 +1,5 @@
 use std::{f32::consts::PI, ops::Mul};
 
-use rand::Rng;
 use raylib::prelude::*;
 
 pub mod res;
@@ -37,14 +36,6 @@ fn main() {
 
     m.gen_wallmods(&mut rl, &thread);
 
-    let look_angles: Vector2 = Vector2::zero();
-
-    let mut vel: Vector3 = Vector3 {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-    };
-
     rl.set_camera_mode(&camera, CameraMode::CAMERA_ORBITAL);
     rl.set_target_fps(60);
     rl.disable_cursor();
@@ -64,17 +55,27 @@ fn main() {
         );
 
         for (i, model) in m.wallmodels.clone().into_iter().enumerate() {
+            model
+                .model
+                .materials()
+                .first()
+                .unwrap()
+                .to_owned()
+                .set_material_texture(
+                    raylib::consts::MaterialMapIndex::MATERIAL_MAP_ALBEDO,
+                    model.tex,
+                );
             d2.draw_model_ex(
-                model.model.clone(),
+                model.model,
                 model.position,
                 Vector3::up(),
                 model.angle,
                 Vector3::one(),
                 model.color,
             );
-            //d2.draw_model(model.model.clone(), model.position, 1.0, Color::BLUE);
             //dbg!(model);
         }
+        d2.draw_fps(10, 10);
     }
 }
 

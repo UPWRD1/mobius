@@ -4,7 +4,7 @@
 
 [WALLS]
 //id     xstart zstart xend   zend   portid
-  0      0      0      0      5      -1      textures/cracked_concrete.jpg
-  1      0      5      5      5      -1      textures/cracked_concrete.jpg
-  2      5      5      5      0      -1      textures/cracked_concrete.jpg
-  3      5      0      0      0      -1      textures/cracked_concrete.jpg
+  0      0      0      0      5      -1      /workspaces/mobius/textures/cracked_concrete.png
+  1      0      5      5      5      -1      /workspaces/mobius/textures/cracked_concrete.png
+  2      5      5      5      0      -1      /workspaces/mobius/textures/cracked_concrete.png
+  3      5      0      0      0      -1      /workspaces/mobius/textures/cracked_concrete.png

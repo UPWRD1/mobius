@@ -2,9 +2,11 @@ use std::{fs, vec};
 
 use rand::Rng;
 use raylib::color::Color;
+use raylib::ffi::GetRandomValue;
 use raylib::models::{RaylibMaterial, RaylibModel, WeakModel};
 use raylib::prelude;
 use raylib::prelude::RaylibMesh;
+use raylib::texture::{Texture2D, WeakTexture2D};
 use raylib::{math::Vector3, RaylibHandle, RaylibThread};
 
 #[derive(Debug)]
@@ -25,6 +27,7 @@ pub struct WallModel {
     pub angle: f32,
     pub length: f32,
     pub color: Color,
+    pub tex: WeakTexture2D,
 }
 
 #[derive(Debug)]
@@ -148,37 +151,21 @@ impl Map {
                     )
                     .unwrap()
                 };
-                let mut rng: rand::prelude::ThreadRng = rand::thread_rng();
+                let im: prelude::Image =
+                    raylib::texture::Image::load_image(&w.tex.to_owned()).unwrap();
 
-                let walltex: prelude::WeakTexture2D = unsafe {
-                    rl.load_texture(thread, &w.tex.to_owned())
-                        .unwrap()
-                        .make_weak()
-                };
-                unsafe {
-                    model
-                        .make_weak()
-                        .materials_mut()
-                        .first()
-                        .unwrap()
-                        .maps()
-                        .first()
-                        .unwrap()
-                        .texture = walltex.to_raw()
-                }
+                let walltex: prelude::WeakTexture2D =
+                    unsafe { rl.load_texture_from_image(thread, &im).unwrap().make_weak() };
 
+                let rand_light = unsafe { GetRandomValue(0, 255) as u8 };
                 let wallmod: WallModel = WallModel {
                     model: unsafe { model.make_weak() },
                     position: cube_pos,
                     height: cube_height,
                     angle: cube_angle,
                     length: line_len,
-                    color: Color::new(
-                        rng.gen_range(0..255),
-                        rng.gen_range(0..255),
-                        rng.gen_range(0..255),
-                        255,
-                    ),
+                    color: Color::new(rand_light, rand_light, rand_light, 255),
+                    tex: walltex,
                 };
 
                 self.wallmodels.push(wallmod.to_owned());

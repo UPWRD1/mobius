@@ -1,5 +1,3 @@
-use std::{f32::consts::PI, ops::Mul};
-
 use raylib::prelude::*;
 use res::player::Player;
 
@@ -8,8 +6,8 @@ pub mod res;
 const WINDOW_WIDTH: i32 = 1280;
 const WINDOW_HEIGHT: i32 = 720; // / 2;
 
-const PLAYER_CAMERA_MIN_CLAMP: f32 = 89.0;
-const PLAYER_CAMERA_MAX_CLAMP: f32 = -89.0;
+const PLAYER_CAMERA_MIN_CLAMP: f32 = -89.0;
+const PLAYER_CAMERA_MAX_CLAMP: f32 = 89.0;
 const PLAYER_MOUSE_SENS: f32 = 0.1;
 const PLAYER_CAM_DIV: f32 = 5.1;
 
@@ -37,7 +35,7 @@ fn main() {
     let mut m = res::level::Map::new("demo.map");
     m.gen_wallmods(&mut rl, &thread);
 
-    rl.set_camera_mode(&camera, CameraMode::CAMERA_CUSTOM);
+    rl.set_camera_mode(&camera, CameraMode::CAMERA_FIRST_PERSON);
     rl.set_target_fps(30);
     rl.disable_cursor();
     rl.hide_cursor();
@@ -45,8 +43,8 @@ fn main() {
     let mut p = Player::new(camera, &rl);
 
     while !rl.window_should_close() {
-        //rl.update_camera(&mut camera);
         let dt = rl.get_frame_time();
+        rl.update_camera(&mut camera);
         p.update(&rl, dt);
 
         let mut d = rl.begin_drawing(&thread);

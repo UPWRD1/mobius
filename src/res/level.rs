@@ -125,57 +125,59 @@ impl Map {
         for s in &self.sectors {
             for i in s.firstwall..s.nwalls + 1 {
                 let w = self.walls.get(i).unwrap();
-                //draw_wall_lines(d2, w, s);
-                let cube_pos = Vector3 {
-                    // Midpoint formula to find center of line.
-                    x: (w.xstart + w.xend) / 2.0,
-                    y: (s.floor_height + s.ceil_height) / 2.0,
-                    z: (w.zstart + w.zend) / 2.0,
-                };
+                if w.portalid < 0 {
+                    //draw_wall_lines(d2, w, s);
+                    let cube_pos = Vector3 {
+                        // Midpoint formula to find center of line.
+                        x: (w.xstart + w.xend) / 2.0,
+                        y: (s.floor_height + s.ceil_height) / 2.0,
+                        z: (w.zstart + w.zend) / 2.0,
+                    };
 
-                let cube_height = s.ceil_height - s.floor_height; // How tall the wall?
-                let line_xz_slope = (w.zend - w.zstart) / (w.xend - w.xstart); //Slope formula
-                let cube_angle = f32::atan(line_xz_slope).to_degrees(); //Converts to rads, then deg
-                let line_len =
-                    f32::sqrt((w.xend - w.xstart).powf(2.0) + (w.zend - w.zstart).powf(2.0));
+                    let cube_height = s.ceil_height - s.floor_height; // How tall the wall?
+                    let line_xz_slope = (w.zend - w.zstart) / (w.xend - w.xstart); //Slope formula
+                    let cube_angle = f32::atan(line_xz_slope).to_degrees(); //Converts to rads, then deg
+                    let line_len =
+                        f32::sqrt((w.xend - w.xstart).powf(2.0) + (w.zend - w.zstart).powf(2.0));
 
-                //println!("{}", cube_angle);
+                    //println!("{}", cube_angle);
 
-                let model: prelude::Model = unsafe {
-                    rl.load_model_from_mesh(
-                        thread,
-                        prelude::Mesh::gen_mesh_cube(thread, line_len, cube_height, 0.1)
-                            .make_weak(),
-                    )
-                    .unwrap()
-                };
-                let im: prelude::Image =
-                    raylib::texture::Image::load_image(&w.tex.to_owned()).unwrap();
+                    let model: prelude::Model = unsafe {
+                        rl.load_model_from_mesh(
+                            thread,
+                            prelude::Mesh::gen_mesh_cube(thread, line_len, cube_height, 0.0)
+                                .make_weak(),
+                        )
+                        .unwrap()
+                    };
+                    let im: prelude::Image =
+                        raylib::texture::Image::load_image(&w.tex.to_owned()).unwrap();
 
-                let walltex: prelude::WeakTexture2D =
-                    unsafe { rl.load_texture_from_image(thread, &im).unwrap().make_weak() };
+                    let walltex: prelude::WeakTexture2D =
+                        unsafe { rl.load_texture_from_image(thread, &im).unwrap().make_weak() };
 
-                //let rand_light = unsafe { GetRandomValue(0, 255) as u8 };
+                    //let rand_light = unsafe { GetRandomValue(0, 255) as u8 };
 
-                model
-                    .materials()
-                    .first()
-                    .unwrap()
-                    .to_owned()
-                    .set_material_texture(
-                        raylib::consts::MaterialMapIndex::MATERIAL_MAP_ALBEDO,
-                        walltex.clone(),
-                    );
-                let wallmod: WallModel = WallModel {
-                    model: unsafe { model.make_weak() },
-                    position: cube_pos,
-                    height: cube_height,
-                    angle: cube_angle,
-                    length: line_len,
-                    color: Color::WHITE, //Color::new(rand_light, rand_light, rand_light, 255),
-                    tex: walltex.clone(),
-                };
-                self.wallmodels.push(wallmod.to_owned());
+                    model
+                        .materials()
+                        .first()
+                        .unwrap()
+                        .to_owned()
+                        .set_material_texture(
+                            raylib::consts::MaterialMapIndex::MATERIAL_MAP_ALBEDO,
+                            walltex.clone(),
+                        );
+                    let wallmod: WallModel = WallModel {
+                        model: unsafe { model.make_weak() },
+                        position: cube_pos,
+                        height: cube_height,
+                        angle: cube_angle,
+                        length: line_len,
+                        color: Color::WHITE, //Color::new(rand_light, rand_light, rand_light, 255),
+                        tex: walltex.clone(),
+                    };
+                    self.wallmodels.push(wallmod.to_owned());
+                }
             }
         }
         //dbg!(self.wallmodels.clone());

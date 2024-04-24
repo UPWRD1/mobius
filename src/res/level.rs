@@ -1,11 +1,16 @@
 use std::{fs, vec};
 
 use raylib::color::Color;
+use raylib::math::Vector2;
 use raylib::models::{RaylibMaterial, RaylibModel, WeakModel};
 use raylib::prelude;
 use raylib::prelude::RaylibMesh;
 use raylib::texture::WeakTexture2D;
 use raylib::{math::Vector3, RaylibHandle, RaylibThread};
+
+pub fn point_side(p: &Vector2, a: &Vector2, b: &Vector2) -> f32 {
+    -((p.x - a.x) * (b.y - a.y) - (p.y - a.y) * (b.x - a.x))
+}
 
 #[derive(Debug)]
 pub struct Wall {
@@ -181,5 +186,25 @@ impl Map {
             }
         }
         //dbg!(self.wallmodels.clone());
+    }
+
+    pub fn p_is_in_sector(&mut self, p: Vector2) -> bool {
+        for w in &self.walls {
+            if point_side(
+                &p,
+                &Vector2 {
+                    x: w.xstart,
+                    y: w.zstart,
+                },
+                &Vector2 {
+                    x: w.xend,
+                    y: w.zend,
+                },
+            ) > 0.0
+            {
+                return false;
+            }
+        }
+        return true;
     }
 }
